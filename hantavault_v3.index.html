@@ -1,0 +1,333 @@
+
+<h2 class="sr-only">HantaVault — shared research tracker updated with correct roles and research agenda</h2>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: #0d0d14; color: #f0f0f0; }
+.sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap; }
+.nav { position:sticky;top:0;z-index:100;background:#0d0d14;border-bottom:1px solid #1e1e2e;display:flex;align-items:center;padding:0 1.2rem;height:50px; }
+.nav-logo { font-size:12px;font-weight:700;color:#ff4d6d;letter-spacing:.1em;text-transform:uppercase;margin-right:1.5rem;white-space:nowrap; }
+.nav-tabs { display:flex;gap:3px;overflow-x:auto;scrollbar-width:none;flex:1; }
+.nav-tabs::-webkit-scrollbar { display:none; }
+.nav-tab { padding:5px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid transparent;white-space:nowrap;transition:all .15s;color:#666; }
+.nav-tab:hover { color:#f0f0f0;background:#1a1a2e; }
+.nav-tab.active { color:#fff;border-color:var(--ac,#ff4d6d); }
+.sync-dot { width:7px;height:7px;border-radius:50%;background:#4ade80;margin-left:auto;flex-shrink:0; }
+.sync-dot.syncing { background:#fbbf24;animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+.page { display:none;min-height:calc(100vh - 50px);padding:1.5rem;max-width:820px;margin:0 auto; }
+.page.active { display:block; }
+
+/* COVER */
+.cover-tag { display:inline-block;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#ff4d6d;border:1px solid #ff4d6d44;border-radius:20px;padding:3px 12px;margin-bottom:1.2rem; }
+.cover-title { font-size:clamp(20px,4vw,32px);font-weight:700;line-height:1.25;margin-bottom:.8rem; }
+.cover-title span { color:#ff4d6d; }
+.cover-sub { font-size:13px;color:#777;line-height:1.7;margin-bottom:1.5rem; }
+
+.two-col { display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:1.5rem 0; }
+@media(max-width:600px){ .two-col { grid-template-columns:1fr; } }
+
+.agenda-box { background:#12121e;border:1px solid #a78bfa44;border-radius:12px;padding:1.25rem 1.5rem; }
+.thesis-box { background:#12121e;border:1px solid #ff4d6d44;border-radius:12px;padding:1.25rem 1.5rem; }
+.box-label { font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.75rem; }
+.agenda-label { color:#a78bfa; }
+.thesis-label { color:#ff4d6d; }
+.box-text { font-size:12.5px;line-height:1.8;color:#ccc; }
+.box-text b { color:#f0f0f0; }
+.agenda-list { list-style:none;padding:0;margin:0; }
+.agenda-list li { font-size:12px;color:#ccc;line-height:1.7;padding:4px 0;border-bottom:1px solid #1e1e2e;display:flex;gap:8px; }
+.agenda-list li:last-child { border:none; }
+.agenda-list li::before { content:'→';color:#a78bfa;flex-shrink:0; }
+
+.team-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:1.5rem 0; }
+.team-card { background:#12121e;border:1px solid #1e1e2e;border-radius:12px;padding:1.1rem .9rem;text-align:center;cursor:pointer;transition:all .2s; }
+.team-card:hover { transform:translateY(-2px);border-color:var(--ac); }
+.team-avatar { width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin:0 auto .6rem; }
+.team-name { font-size:13px;font-weight:600;margin-bottom:3px; }
+.team-role { font-size:10px;color:#777;line-height:1.4; }
+.team-prog { font-size:10px;color:#4ade80;margin-top:8px; }
+
+.tl { display:flex;gap:8px;margin:1.5rem 0;flex-wrap:wrap; }
+.tl-b { flex:1;min-width:110px;background:#12121e;border:1px solid #1e1e2e;border-radius:8px;padding:.7rem .9rem; }
+.tl-w { font-size:10px;color:#777;margin-bottom:3px; }
+.tl-p { font-size:12px;font-weight:600; }
+
+/* MEMBER */
+.member-header { border-radius:12px;padding:1.5rem;margin-bottom:1.25rem; }
+.member-top { display:flex;align-items:center;gap:.9rem;margin-bottom:.9rem; }
+.m-avatar { width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0; }
+.m-name { font-size:20px;font-weight:700; }
+.m-role { font-size:12px;opacity:.7;margin-top:2px; }
+.m-email { font-size:11px;color:#a78bfa;margin-top:4px; }
+.m-school { font-size:11px;color:#666;margin-top:2px; }
+.m-desc { font-size:12px;color:#aaa;line-height:1.6;margin-bottom:.9rem;margin-top:.75rem; }
+.rule-row { display:flex;gap:6px;flex-wrap:wrap; }
+.rule-pill { font-size:10px;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.08);color:#aaa; }
+
+.prog-wrap { margin-bottom:1.25rem; }
+.prog-top { display:flex;justify-content:space-between;margin-bottom:5px;font-size:11px;color:#777; }
+.prog-bar { height:5px;background:#1e1e2e;border-radius:10px;overflow:hidden; }
+.prog-fill { height:100%;border-radius:10px;transition:width .4s; }
+
+.wk-label { font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#666;margin-bottom:.7rem;display:flex;align-items:center;gap:8px; }
+.wk-label::after { content:'';flex:1;height:1px;background:#1e1e2e; }
+.wk-dl { font-size:10px;color:#ff4d6d;background:#ff4d6d15;padding:2px 8px;border-radius:10px; }
+
+.paper-card { background:#12121e;border:1px solid #1e1e2e;border-radius:10px;padding:1.1rem;margin-bottom:9px;transition:border-color .2s; }
+.paper-card.done { border-color:#4ade8055; }
+.paper-top-row { display:flex;align-items:flex-start;gap:10px;margin-bottom:.9rem; }
+.chk { width:20px;height:20px;border-radius:5px;border:2px solid #333;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:3px;transition:all .15s; }
+.chk.on { background:#4ade80;border-color:#4ade80; }
+.chk svg { width:11px;height:11px;stroke:#000;display:none; }
+.chk.on svg { display:block; }
+.p-num { font-size:10px;font-weight:600;letter-spacing:.08em;color:#666;text-transform:uppercase;margin-bottom:2px; }
+.p-title { width:100%;background:transparent;border:none;color:#f0f0f0;font-size:13px;font-weight:600;outline:none;padding:0; }
+.p-title::placeholder { color:#333;font-weight:400; }
+.p-link { width:100%;background:#0a0a12;border:1px solid #1e1e2e;border-radius:6px;color:#777;font-size:11px;outline:none;padding:5px 9px;margin-top:5px; }
+.p-link::placeholder { color:#2a2a3e; }
+.p-link:focus { border-color:#333;color:#ccc; }
+.sum-label { font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#666;margin-bottom:5px; }
+.sum-box { width:100%;min-height:85px;background:#0a0a12;border:1px solid #1e1e2e;border-radius:8px;color:#ccc;font-size:12px;padding:9px 11px;outline:none;resize:vertical;font-family:inherit;line-height:1.6; }
+.sum-box::placeholder { color:#2a2a3e; }
+.sum-box:focus { border-color:#333; }
+.diff-row { display:flex;gap:5px;margin-top:8px;align-items:center; }
+.diff-lbl { font-size:10px;color:#555; }
+.diff-btn { font-size:10px;padding:3px 10px;border-radius:20px;border:1px solid #222;background:transparent;color:#666;cursor:pointer;transition:all .12s; }
+.diff-btn.e { background:#14532d33;border-color:#4ade80;color:#4ade80; }
+.diff-btn.m { background:#78350f33;border-color:#fbbf24;color:#fbbf24; }
+.diff-btn.h { background:#7f1d1d33;border-color:#f87171;color:#f87171; }
+
+.report-wrap { background:#12121e;border:1px solid #1e1e2e;border-radius:10px;padding:1.1rem;margin-bottom:.75rem; }
+.report-title { font-size:12px;font-weight:600;margin-bottom:2px; }
+.report-sub { font-size:10px;color:#666;margin-bottom:.8rem; }
+.report-box { width:100%;min-height:120px;background:#0a0a12;border:1px solid #1e1e2e;border-radius:8px;color:#ccc;font-size:12px;padding:9px 11px;outline:none;resize:vertical;font-family:inherit;line-height:1.6; }
+.report-box::placeholder { color:#2a2a3e; }
+.report-box:focus { border-color:#333; }
+.save-row { display:flex;align-items:center;gap:10px;margin-top:8px; }
+.save-btn { padding:6px 16px;border-radius:7px;border:1px solid #2a2a3e;background:transparent;color:#aaa;font-size:11px;cursor:pointer;transition:all .15s; }
+.save-btn:hover { background:#1a1a2e;color:#fff; }
+.saved-msg { font-size:10px;color:#4ade80;opacity:0;transition:opacity .3s; }
+.divider { height:1px;background:#1e1e2e;margin:1.5rem 0; }
+.loading-overlay { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:4rem; }
+.loading-spinner { width:28px;height:28px;border:2px solid #1e1e2e;border-top-color:#ff4d6d;border-radius:50%;animation:spin .7s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.loading-text { font-size:12px;color:#666; }
+</style>
+
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading HantaVault...</div>
+</div>
+
+<div id="appShell" style="display:none">
+<nav class="nav">
+  <div class="nav-logo">🦠 HantaVault</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" style="--ac:#ff4d6d" onclick="goTo('cover')" data-page="cover">Overview</div>
+    <div class="nav-tab" style="--ac:#ff4d6d" onclick="goTo('sujana')" data-page="sujana">Sujana</div>
+    <div class="nav-tab" style="--ac:#a78bfa" onclick="goTo('sneha')" data-page="sneha">Sneha</div>
+    <div class="nav-tab" style="--ac:#22d3ee" onclick="goTo('pragya')" data-page="pragya">Pragya</div>
+    <div class="nav-tab" style="--ac:#fbbf24" onclick="goTo('vani')" data-page="vani">Vani</div>
+    <div class="nav-tab" style="--ac:#4ade80" onclick="goTo('femi')" data-page="femi">Femi</div>
+  </div>
+  <div class="sync-dot" id="syncDot"></div>
+</nav>
+
+<div id="page-cover" class="page active"></div>
+<div id="page-sujana" class="page"></div>
+<div id="page-sneha" class="page"></div>
+<div id="page-pragya" class="page"></div>
+<div id="page-vani" class="page"></div>
+<div id="page-femi" class="page"></div>
+</div>
+
+<script>
+const MEMBERS = [
+  { id:'sujana', name:'Sujana Priya N', ini:'SJ', role:'Biology Lead · Team Lead · Reader · Writer', email:'nsujana1106@gmail.com', school:'Grade 10 · Jubilee Hills Public School', ac:'#ff4d6d', acBg:'#ff4d6d1a', desc:'Leads the team and covers the biological backbone — rodent ecology, deforestation-spillover mechanisms, and hantavirus biology. Also responsible for final writing and synthesis.' },
+  { id:'sneha',  name:'Sneha',  ini:'SN', role:'Policy Lead', email:'', school:'', ac:'#a78bfa', acBg:'#a78bfa1a', desc:'Covers international and Indian environmental law, Forest Rights Act implementation failures, and governance gaps.' },
+  { id:'pragya', name:'Pragya', ini:'PR', role:'Reader — Biology & Policy', email:'', school:'', ac:'#22d3ee', acBg:'#22d3ee1a', desc:'Reads across both biology and policy literature — covering the intersection papers that bridge both sections of the review.' },
+  { id:'vani',   name:'Vani',   ini:'VN', role:'Data & Stats', email:'', school:'', ac:'#fbbf24', acBg:'#fbbf241a', desc:'Handles real-world datasets — deforestation rates, outbreak records, WHO data, and Jharkhand forest cover statistics.' },
+  { id:'femi',   name:'Femi',   ini:'FM', role:'Reader — Biology & Policy', email:'', school:'', ac:'#4ade80', acBg:'#4ade801a', desc:'Reads across both biology and policy literature, supporting the team with cross-disciplinary coverage.' },
+];
+
+const WEEKS=[{num:1,dl:'Jun 15'},{num:2,dl:'Jun 22'},{num:3,dl:'Jun 29'},{num:4,dl:'Jul 6'},{num:5,dl:'Jul 13'},{num:6,dl:'Jul 20'},{num:7,dl:'Jul 27'},{num:8,dl:'Aug 3'}];
+
+let DB={}, saveTimer=null;
+const skey=(mid,w,p,f)=>`${mid}_w${w}_p${p}_${f}`;
+const rkey=(mid,w)=>`${mid}_w${w}_report`;
+const get=(k,def='')=>DB[k]!==undefined?DB[k]:def;
+
+function set(k,v){
+  DB[k]=v; setSyncState(true);
+  if(saveTimer) clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    try{ await window.storage.set('hantavault_db',JSON.stringify(DB),true); setSyncState(false); }
+    catch(e){ setSyncState(false); }
+  },900);
+}
+
+function setSyncState(s){ const d=document.getElementById('syncDot'); if(d) d.classList.toggle('syncing',s); }
+function countDone(mid){ let n=0; for(let w=1;w<=8;w++) for(let p=1;p<=3;p++) if(get(skey(mid,w,p,'chk'))==='1') n++; return n; }
+function goTo(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(`page-${id}`).classList.add('active');
+  document.querySelector(`[data-page="${id}"]`).classList.add('active');
+}
+
+function buildCover(){
+  const el=document.getElementById('page-cover');
+  const cards=MEMBERS.map(m=>{
+    const done=countDone(m.id);
+    return `<div class="team-card" style="--ac:${m.ac}" onclick="goTo('${m.id}')">
+      <div class="team-avatar" style="background:${m.acBg};color:${m.ac}">${m.ini}</div>
+      <div class="team-name">${m.name.split(' ')[0]}</div>
+      <div class="team-role">${m.role}</div>
+      <div class="team-prog" id="cp-${m.id}">${done}/24 papers</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div style="padding-top:1.5rem">
+      <div class="cover-tag">Research Tracker · 2026</div>
+      <h1 class="cover-title">Hantavirus × Deforestation<br><span>× Policy Failure</span></h1>
+      <p class="cover-sub">Global systematic review · South Asian policy lens · 5-person team · Target: <em>One Health</em> / <em>Frontiers in Public Health</em></p>
+    </div>
+
+    <div class="two-col">
+      <div class="agenda-box">
+        <div class="box-label agenda-label">Research Agenda</div>
+        <ul class="agenda-list">
+          <li>Does deforestation policy failure predict hantavirus spillover risk?</li>
+          <li>Global literature review with India & Jharkhand as the anchor case</li>
+          <li>Three-way intersection: rodent ecology + deforestation + governance failure</li>
+          <li>Scope: global evidence, South Asian policy application</li>
+          <li>20–25 pages · 25–40 papers · 12-week sprint</li>
+          <li>Original contribution: nobody has aimed this lens at Jharkhand before</li>
+        </ul>
+      </div>
+      <div class="thesis-box">
+        <div class="box-label thesis-label">Core Thesis</div>
+        <p class="box-text" style="font-style:italic">"Hantavirus risk in India is not a biology problem — it is a governance problem. The ecological conditions that create spillover are directly produced by state-sanctioned policy failures, most acutely in deforested, mining-heavy tribal regions such as Jharkhand."</p>
+        <div style="margin-top:1rem;padding-top:.75rem;border-top:1px solid #1e1e2e">
+          <div class="box-label thesis-label" style="margin-bottom:.5rem">Report Structure</div>
+          <p class="box-text" style="font-size:11px;line-height:1.9;color:#aaa">
+            1. Intro + Political Framing<br>
+            2. Methodology<br>
+            3. Rodent Ecology + Spillover Biology<br>
+            4. Deforestation + Land Policy<br>
+            5. India / Jharkhand Case<br>
+            6. Synthesis + Original Argument<br>
+            7. Conclusion + Gaps
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="team-grid">${cards}</div>
+    <div class="tl">
+      <div class="tl-b"><div class="tl-w">Weeks 1–8</div><div class="tl-p">Research</div></div>
+      <div class="tl-b"><div class="tl-w">Weeks 9–10</div><div class="tl-p">Writing</div></div>
+      <div class="tl-b"><div class="tl-w">Weeks 11–12</div><div class="tl-p">Synthesis</div></div>
+      <div class="tl-b"><div class="tl-w">Target</div><div class="tl-p">Aug 31, 2026</div></div>
+    </div>`;
+}
+
+function buildMember(m){
+  const el=document.getElementById(`page-${m.id}`);
+  const done=countDone(m.id);
+  let html=`
+    <div class="member-header" style="background:${m.acBg};border:1px solid ${m.ac}33">
+      <div class="member-top">
+        <div class="m-avatar" style="background:${m.acBg};color:${m.ac}">${m.ini}</div>
+        <div>
+          <div class="m-name">${m.name}</div>
+          <div class="m-role">${m.role}</div>
+          ${m.email?`<div class="m-email">${m.email}</div>`:''}
+          ${m.school?`<div class="m-school">${m.school}</div>`:''}
+        </div>
+      </div>
+      <div class="m-desc">${m.desc}</div>
+      <div class="rule-row">
+        <span class="rule-pill">No AI for summaries</span>
+        <span class="rule-pill">Read in order</span>
+        <span class="rule-pill">Update before every call</span>
+      </div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-top"><span>Overall progress</span><span id="pl-${m.id}">${done} / 24 papers</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="pf-${m.id}" style="width:${Math.round(done/24*100)}%;background:${m.ac}"></div></div>
+    </div>`;
+
+  for(const wk of WEEKS){
+    html+=`<div style="margin-bottom:1.25rem"><div class="wk-label">Week ${wk.num}<span class="wk-dl">Due ${wk.dl}</span></div>`;
+    for(let p=1;p<=3;p++){
+      const chk=get(skey(m.id,wk.num,p,'chk'))==='1';
+      const diff=get(skey(m.id,wk.num,p,'diff'));
+      const tv=get(skey(m.id,wk.num,p,'title')).replace(/"/g,'&quot;').replace(/</g,'&lt;');
+      const lv=get(skey(m.id,wk.num,p,'link')).replace(/"/g,'&quot;').replace(/</g,'&lt;');
+      const sv=get(skey(m.id,wk.num,p,'sum')).replace(/</g,'&lt;');
+      html+=`<div class="paper-card ${chk?'done':''}" id="pc-${m.id}-${wk.num}-${p}">
+        <div class="paper-top-row">
+          <div class="chk ${chk?'on':''}" id="ck-${m.id}-${wk.num}-${p}" onclick="toggleChk('${m.id}',${wk.num},${p})">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>
+          </div>
+          <div style="flex:1">
+            <div class="p-num">Paper ${p}</div>
+            <input class="p-title" placeholder="Paper title..." value="${tv}" oninput="set('${skey(m.id,wk.num,p,'title')}',this.value)">
+            <input class="p-link" placeholder="Paste link / DOI..." value="${lv}" oninput="set('${skey(m.id,wk.num,p,'link')}',this.value)">
+          </div>
+        </div>
+        <div class="sum-label">Your summary — in your own words only</div>
+        <textarea class="sum-box" placeholder="What did this paper argue? Key finding? How does it connect to our thesis? Write like you'd explain it to someone on the call..." oninput="set('${skey(m.id,wk.num,p,'sum')}',this.value)">${sv}</textarea>
+        <div class="diff-row">
+          <span class="diff-lbl">Difficulty:</span>
+          <button class="diff-btn ${diff==='easy'?'e':''}" onclick="setDiff('${m.id}',${wk.num},${p},'easy',this)">Easy</button>
+          <button class="diff-btn ${diff==='medium'?'m':''}" onclick="setDiff('${m.id}',${wk.num},${p},'medium',this)">Medium</button>
+          <button class="diff-btn ${diff==='hard'?'h':''}" onclick="setDiff('${m.id}',${wk.num},${p},'hard',this)">Hard</button>
+        </div>
+      </div>`;
+    }
+    const rv=get(rkey(m.id,wk.num)).replace(/</g,'&lt;');
+    html+=`<div class="report-wrap">
+      <div class="report-title">Weekend Progress Report — Week ${wk.num}</div>
+      <div class="report-sub">Drop your progress report here over the weekend. Be honest, be specific. No AI.</div>
+      <textarea class="report-box" placeholder="What did you cover? Key takeaways? Confusions? How does your reading connect to other sections?" oninput="set('${rkey(m.id,wk.num)}',this.value)">${rv}</textarea>
+      <div class="save-row">
+        <button class="save-btn" onclick="flashSaved('sv-${m.id}-${wk.num}')">Save report</button>
+        <span class="saved-msg" id="sv-${m.id}-${wk.num}">Saved!</span>
+      </div>
+    </div><div class="divider"></div></div>`;
+  }
+  el.innerHTML=html;
+}
+
+function toggleChk(mid,w,p){
+  const k=skey(mid,w,p,'chk'); const val=get(k)==='1'?'0':'1';
+  set(k,val);
+  document.getElementById(`ck-${mid}-${w}-${p}`).classList.toggle('on',val==='1');
+  document.getElementById(`pc-${mid}-${w}-${p}`).classList.toggle('done',val==='1');
+  updateProg(mid);
+}
+function setDiff(mid,w,p,level,btn){
+  set(skey(mid,w,p,'diff'),level);
+  const map={easy:'e',medium:'m',hard:'h'};
+  btn.parentElement.querySelectorAll('.diff-btn').forEach(b=>b.className='diff-btn');
+  btn.className=`diff-btn ${map[level]}`;
+}
+function updateProg(mid){
+  const done=countDone(mid);
+  const lbl=document.getElementById(`pl-${mid}`); const fill=document.getElementById(`pf-${mid}`); const cp=document.getElementById(`cp-${mid}`);
+  if(lbl) lbl.textContent=`${done} / 24 papers`;
+  if(fill) fill.style.width=`${Math.round(done/24*100)}%`;
+  if(cp) cp.textContent=`${done}/24 papers`;
+}
+function flashSaved(id){ const el=document.getElementById(id); if(!el) return; el.style.opacity='1'; setTimeout(()=>el.style.opacity='0',2200); }
+
+async function init(){
+  try{ const r=await window.storage.get('hantavault_db',true); if(r&&r.value) DB=JSON.parse(r.value); } catch(e){ DB={}; }
+  buildCover(); MEMBERS.forEach(buildMember);
+  document.getElementById('loadingOverlay').style.display='none';
+  document.getElementById('appShell').style.display='block';
+}
+init();
+</script>
